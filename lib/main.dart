@@ -1,11 +1,12 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:location/location.dart';
+import 'package:weagus/models/city.dart';
+import 'package:weagus/search/city_search.dart';
 
 Future main() async {
   await dotenv.load(fileName: ".env");
@@ -41,6 +42,8 @@ class _WeagusState extends State<Weagus> {
   double so2 = 0;
   double pm2_5 = 0;
   double pm10 = 0;
+  City selectedCity;
+  List<City> history = [];
 
   // Método que que modifica el estado del componente
   initState() {
@@ -84,7 +87,7 @@ class _WeagusState extends State<Weagus> {
 // introducida por el usuario
   void fetchSearch(String input) async {
     try {
-      var searchInput = input.replaceAll(" ", "");
+      input.replaceAll(" ", "");
       var searchResult = await http.get(Uri.parse(searchApiUrl +
           API_KEY +
           "&q=" +
@@ -144,7 +147,7 @@ class _WeagusState extends State<Weagus> {
         '&days=7&aqi=yes&alerts=yes'));
 
     var result = await json.decode(locationResult.body);
-    debugPrint("results: $result");
+
     setState(() {
       city = result["location"]["name"];
       region = result["location"]["region"];
@@ -188,10 +191,13 @@ class _WeagusState extends State<Weagus> {
     epaIndex <= 3
         ? icaTip = 'La calidad del aire es buena. ¡Un día perfecto para pasear!'
         : (epaIndex >= 4 && epaIndex <= 6)
-            ? icaTip = 'Los adultos y niños con problemas pulmonares y los adultos con problemas cardíacos que experimentan síntomas deben considerar la posibilidad de reducir la actividad física extenuante, especialmente al aire libre.'
+            ? icaTip =
+                'Los adultos y niños con problemas pulmonares y los adultos con problemas cardíacos que experimentan síntomas deben considerar la posibilidad de reducir la actividad física extenuante, especialmente al aire libre.'
             : (epaIndex >= 7 && epaIndex <= 9)
-                ? icaTip = 'Cualquiera que experimente molestias como dolor de ojos, tos o dolor de garganta debe considerar reducir la actividad, especialmente al aire libre.'
-                : icaTip = 'Cualquier exposición al aire, aunque sea por pocos minutos, puede provocar graves efectos en la salud de todas las personas. Evite las actividades al aire libre.';
+                ? icaTip =
+                    'Cualquiera que experimente molestias como dolor de ojos, tos o dolor de garganta debe considerar reducir la actividad, especialmente al aire libre.'
+                : icaTip =
+                    'Cualquier exposición al aire, aunque sea por pocos minutos, puede provocar graves efectos en la salud de todas las personas. Evite las actividades al aire libre.';
 
     showModalBottomSheet(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -217,22 +223,20 @@ class _WeagusState extends State<Weagus> {
                           fontSize: 20,
                           fontWeight: FontWeight.w300),
                     ),
-                    Divider(
-                      height: 10,
-                      thickness: 1,
-                      color: Colors.grey),
-                    Padding(padding: const EdgeInsets.only(top: 16.0),
-                    child: Text(
-                      'Nivel de polución',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700),
-                    )),
+                    Divider(height: 10, thickness: 1, color: Colors.grey),
+                    Padding(
+                        padding: const EdgeInsets.only(top: 16.0),
+                        child: Text(
+                          'Nivel de polución',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700),
+                        )),
                     Padding(
                         padding: const EdgeInsets.only(top: 16.0, bottom: 16.0),
                         child: Text(
-                          epaIndex.toString() + ' ' +  icaValue,
+                          epaIndex.toString() + ' ' + icaValue,
                           style: TextStyle(
                               fontSize: 50,
                               fontWeight: FontWeight.w600,
@@ -242,178 +246,345 @@ class _WeagusState extends State<Weagus> {
                                       ? Color.fromRGBO(248, 150, 30, 0.7)
                                       : (epaIndex >= 7 && epaIndex <= 9)
                                           ? Color.fromRGBO(249, 65, 68, 0.7)
-                                          : Color.fromRGBO(206,48,255, 0.7)),
+                                          : Color.fromRGBO(206, 48, 255, 0.7)),
                         )),
-                    Row(
-                      children: [
-                        Expanded(child:  Column(children: [
+                    Row(children: [
+                      Expanded(
+                          child: Column(
+                        children: [
                           Text(pm2_5.toStringAsFixed(2),
-                          style: TextStyle(color: pm2_5 <= 11.999999999
-                                  ? Color.fromRGBO(156,255,156, 0.7)
-                                  : (pm2_5 >= 12.0 && pm2_5 <= 23.99999999)
-                                      ? Color.fromRGBO(48,255,1, 0.7)
-                                      : (pm2_5 >= 24.0 && pm2_5 <= 35.999999999)
-                                          ? Color.fromRGBO(49,207,1, 0.7)
-                                          : (pm2_5 >= 36.0 && pm2_5 <= 41.999999999)
-                                          ? Color.fromRGBO(255,255,1, 0.7)
-                                          : (pm2_5 >= 42.0 && pm2_5 <= 47.999999999)
-                                          ? Color.fromRGBO(255,207,1, 0.7)
-                                          : (pm2_5 >= 48.0 && pm2_5 <= 53.999999999)
-                                          ? Color.fromRGBO(255,154,0, 0.7)
-                                          : (pm2_5 >= 54.0 && pm2_5 <= 58.999999999)
-                                          ? Color.fromRGBO(255,100,100, 0.7)
-                                          : (pm2_5 >= 59.0 && pm2_5 <= 64.999999999)
-                                          ? Color.fromRGBO(255,0,0, 0.7)
-                                          : (pm2_5 >= 59.0 && pm2_5 <= 64.999999999)
-                                          ? Color.fromRGBO(153,0,0, 0.7)
-                                          : Color.fromRGBO(206,48,255, 0.7)
-                                          )),
+                              style: TextStyle(
+                                  color: pm2_5 <= 11.999999999
+                                      ? Color.fromRGBO(156, 255, 156, 0.7)
+                                      : (pm2_5 >= 12.0 && pm2_5 <= 23.99999999)
+                                          ? Color.fromRGBO(48, 255, 1, 0.7)
+                                          : (pm2_5 >= 24.0 &&
+                                                  pm2_5 <= 35.999999999)
+                                              ? Color.fromRGBO(49, 207, 1, 0.7)
+                                              : (pm2_5 >= 36.0 &&
+                                                      pm2_5 <= 41.999999999)
+                                                  ? Color.fromRGBO(
+                                                      255, 255, 1, 0.7)
+                                                  : (pm2_5 >= 42.0 &&
+                                                          pm2_5 <= 47.999999999)
+                                                      ? Color.fromRGBO(
+                                                          255, 207, 1, 0.7)
+                                                      : (pm2_5 >= 48.0 &&
+                                                              pm2_5 <=
+                                                                  53.999999999)
+                                                          ? Color.fromRGBO(
+                                                              255, 154, 0, 0.7)
+                                                          : (pm2_5 >= 54.0 &&
+                                                                  pm2_5 <=
+                                                                      58.999999999)
+                                                              ? Color.fromRGBO(
+                                                                  255,
+                                                                  100,
+                                                                  100,
+                                                                  0.7)
+                                                              : (pm2_5 >= 59.0 &&
+                                                                      pm2_5 <=
+                                                                          64.999999999)
+                                                                  ? Color
+                                                                      .fromRGBO(
+                                                                          255,
+                                                                          0,
+                                                                          0,
+                                                                          0.7)
+                                                                  : (pm2_5 >= 59.0 &&
+                                                                          pm2_5 <=
+                                                                              64.999999999)
+                                                                      ? Color.fromRGBO(
+                                                                          153,
+                                                                          0,
+                                                                          0,
+                                                                          0.7)
+                                                                      : Color.fromRGBO(
+                                                                          206,
+                                                                          48,
+                                                                          255,
+                                                                          0.7))),
                           Text('PM2.5', style: TextStyle(color: Colors.white)),
-                        ],))
-                       ,Expanded(child: Column(children: [
+                        ],
+                      )),
+                      Expanded(
+                          child: Column(
+                        children: [
                           Text(pm10.toStringAsFixed(2),
-                          style: TextStyle(color: pm10 <= 16.99999999
-                                  ? Color.fromRGBO(156,255,156, 0.7)
-                                  : (pm10 >= 17.0 && pm10 <= 33.99999999)
-                                      ? Color.fromRGBO(48,255,1, 0.7)
-                                      : (pm10 >= 34.0 && pm10 <= 50.999999999)
-                                          ? Color.fromRGBO(49,207,1, 0.7)
-                                          : (pm10 >= 51.0 && pm10 <= 58.999999999)
-                                          ? Color.fromRGBO(255,255,1, 0.7)
-                                          : (pm10 >= 59.0 && pm10 <= 66.999999999)
-                                          ? Color.fromRGBO(255,207,1, 0.7)
-                                          : (pm10 >= 67.0 && pm10 <= 75.999999999)
-                                          ? Color.fromRGBO(255,154,0, 0.7)
-                                          : (pm10 >= 76.0 && pm10 <= 83.999999999)
-                                          ? Color.fromRGBO(255,100,100, 0.7)
-                                          : (pm10 >= 84.0 && pm10 <= 91.999999999)
-                                          ? Color.fromRGBO(255,0,0, 0.7)
-                                          : (pm10 >= 92.0 && pm10 <= 100.999999999)
-                                          ? Color.fromRGBO(153,0,0, 0.7)
-                                          : Color.fromRGBO(206,48,255, 0.7))),
+                              style: TextStyle(
+                                  color: pm10 <= 16.99999999
+                                      ? Color.fromRGBO(156, 255, 156, 0.7)
+                                      : (pm10 >= 17.0 && pm10 <= 33.99999999)
+                                          ? Color.fromRGBO(48, 255, 1, 0.7)
+                                          : (pm10 >= 34.0 &&
+                                                  pm10 <= 50.999999999)
+                                              ? Color.fromRGBO(49, 207, 1, 0.7)
+                                              : (pm10 >= 51.0 &&
+                                                      pm10 <= 58.999999999)
+                                                  ? Color.fromRGBO(
+                                                      255, 255, 1, 0.7)
+                                                  : (pm10 >= 59.0 &&
+                                                          pm10 <= 66.999999999)
+                                                      ? Color.fromRGBO(
+                                                          255, 207, 1, 0.7)
+                                                      : (pm10 >= 67.0 &&
+                                                              pm10 <=
+                                                                  75.999999999)
+                                                          ? Color.fromRGBO(
+                                                              255, 154, 0, 0.7)
+                                                          : (pm10 >= 76.0 &&
+                                                                  pm10 <=
+                                                                      83.999999999)
+                                                              ? Color.fromRGBO(
+                                                                  255,
+                                                                  100,
+                                                                  100,
+                                                                  0.7)
+                                                              : (pm10 >= 84.0 &&
+                                                                      pm10 <=
+                                                                          91.999999999)
+                                                                  ? Color
+                                                                      .fromRGBO(
+                                                                          255,
+                                                                          0,
+                                                                          0,
+                                                                          0.7)
+                                                                  : (pm10 >= 92.0 &&
+                                                                          pm10 <=
+                                                                              100.999999999)
+                                                                      ? Color.fromRGBO(
+                                                                          153,
+                                                                          0,
+                                                                          0,
+                                                                          0.7)
+                                                                      : Color.fromRGBO(
+                                                                          206,
+                                                                          48,
+                                                                          255,
+                                                                          0.7))),
                           Text('PM10', style: TextStyle(color: Colors.white)),
-                        ],))
-                        ,
-                        Expanded(child: Column(children: [
-                          Text(so2.toStringAsFixed(2), 
-                           style: TextStyle(color: so2 <= 88.99999999
-                                  ? Color.fromRGBO(156,255,156, 0.7)
-                                  : (so2 >= 89.0 && so2 <= 177.99999999)
-                                      ? Color.fromRGBO(48,255,1, 0.7)
-                                      : (so2 >= 179.0 && so2 <= 266.999999999)
-                                          ? Color.fromRGBO(49,207,1, 0.7)
-                                          : (so2 >= 267.0 && so2 <= 354.999999999)
-                                          ? Color.fromRGBO(255,255,1, 0.7)
-                                          : (so2 >= 355.0 && so2 <= 443.999999999)
-                                          ? Color.fromRGBO(255,207,1, 0.7)
-                                          : (so2 >= 444.0 && so2 <= 532.999999999)
-                                          ? Color.fromRGBO(255,154,0, 0.7)
-                                          : (so2 >= 533.0 && so2 <= 710.999999999)
-                                          ? Color.fromRGBO(255,100,100, 0.7)
-                                          : (so2 >= 711.0 && so2 <= 887.999999999)
-                                          ? Color.fromRGBO(255,0,0, 0.7)
-                                          : (so2 >= 888.0 && so2 <= 1064.999999999)
-                                          ? Color.fromRGBO(153,0,0, 0.7)
-                                          : Color.fromRGBO(206,48,255, 0.7))),
+                        ],
+                      )),
+                      Expanded(
+                          child: Column(
+                        children: [
+                          Text(so2.toStringAsFixed(2),
+                              style: TextStyle(
+                                  color: so2 <= 88.99999999
+                                      ? Color.fromRGBO(156, 255, 156, 0.7)
+                                      : (so2 >= 89.0 && so2 <= 177.99999999)
+                                          ? Color.fromRGBO(48, 255, 1, 0.7)
+                                          : (so2 >= 179.0 &&
+                                                  so2 <= 266.999999999)
+                                              ? Color.fromRGBO(49, 207, 1, 0.7)
+                                              : (so2 >= 267.0 &&
+                                                      so2 <= 354.999999999)
+                                                  ? Color.fromRGBO(
+                                                      255, 255, 1, 0.7)
+                                                  : (so2 >= 355.0 &&
+                                                          so2 <= 443.999999999)
+                                                      ? Color.fromRGBO(
+                                                          255, 207, 1, 0.7)
+                                                      : (so2 >= 444.0 &&
+                                                              so2 <=
+                                                                  532.999999999)
+                                                          ? Color.fromRGBO(
+                                                              255, 154, 0, 0.7)
+                                                          : (so2 >= 533.0 &&
+                                                                  so2 <=
+                                                                      710.999999999)
+                                                              ? Color.fromRGBO(
+                                                                  255,
+                                                                  100,
+                                                                  100,
+                                                                  0.7)
+                                                              : (so2 >= 711.0 &&
+                                                                      so2 <=
+                                                                          887.999999999)
+                                                                  ? Color
+                                                                      .fromRGBO(
+                                                                          255,
+                                                                          0,
+                                                                          0,
+                                                                          0.7)
+                                                                  : (so2 >= 888.0 &&
+                                                                          so2 <=
+                                                                              1064.999999999)
+                                                                      ? Color.fromRGBO(
+                                                                          153,
+                                                                          0,
+                                                                          0,
+                                                                          0.7)
+                                                                      : Color.fromRGBO(
+                                                                          206,
+                                                                          48,
+                                                                          255,
+                                                                          0.7))),
                           Text('SO2', style: TextStyle(color: Colors.white)),
-                        ],))
-                        ,
-                        Expanded(child: Column(children: [
+                        ],
+                      )),
+                      Expanded(
+                          child: Column(
+                        children: [
                           Text(no2.toStringAsFixed(2),
-                           style: TextStyle(color: no2 <= 67.99999999
-                                  ? Color.fromRGBO(156,255,156, 0.7)
-                                  : (no2 >= 68.0 && no2 <= 134.99999999)
-                                      ? Color.fromRGBO(48,255,1, 0.7)
-                                      : (no2 >= 135.0 && no2 <= 200.999999999)
-                                          ? Color.fromRGBO(49,207,1, 0.7)
-                                          : (no2 >= 201.0 && no2 <= 267.999999999)
-                                          ? Color.fromRGBO(255,255,1, 0.7)
-                                          : (no2 >= 268.0 && no2 <= 334.999999999)
-                                          ? Color.fromRGBO(255,207,1, 0.7)
-                                          : (no2 >= 335.0 && no2 <= 400.999999999)
-                                          ? Color.fromRGBO(255,154,0, 0.7)
-                                          : (no2 >= 401.0 && no2 <= 467.999999999)
-                                          ? Color.fromRGBO(255,100,100, 0.7)
-                                          : (no2 >= 468.0 && no2 <= 534.999999999)
-                                          ? Color.fromRGBO(255,0,0, 0.7)
-                                          : (no2 >= 535.0 && no2 <= 600.999999999)
-                                          ? Color.fromRGBO(153,0,0, 0.7)
-                                          : Color.fromRGBO(206,48,255, 0.7))),
+                              style: TextStyle(
+                                  color: no2 <= 67.99999999
+                                      ? Color.fromRGBO(156, 255, 156, 0.7)
+                                      : (no2 >= 68.0 && no2 <= 134.99999999)
+                                          ? Color.fromRGBO(48, 255, 1, 0.7)
+                                          : (no2 >= 135.0 &&
+                                                  no2 <= 200.999999999)
+                                              ? Color.fromRGBO(49, 207, 1, 0.7)
+                                              : (no2 >= 201.0 &&
+                                                      no2 <= 267.999999999)
+                                                  ? Color.fromRGBO(
+                                                      255, 255, 1, 0.7)
+                                                  : (no2 >= 268.0 &&
+                                                          no2 <= 334.999999999)
+                                                      ? Color.fromRGBO(
+                                                          255, 207, 1, 0.7)
+                                                      : (no2 >= 335.0 &&
+                                                              no2 <=
+                                                                  400.999999999)
+                                                          ? Color.fromRGBO(
+                                                              255, 154, 0, 0.7)
+                                                          : (no2 >= 401.0 &&
+                                                                  no2 <=
+                                                                      467.999999999)
+                                                              ? Color.fromRGBO(
+                                                                  255,
+                                                                  100,
+                                                                  100,
+                                                                  0.7)
+                                                              : (no2 >= 468.0 &&
+                                                                      no2 <=
+                                                                          534.999999999)
+                                                                  ? Color
+                                                                      .fromRGBO(
+                                                                          255,
+                                                                          0,
+                                                                          0,
+                                                                          0.7)
+                                                                  : (no2 >= 535.0 &&
+                                                                          no2 <=
+                                                                              600.999999999)
+                                                                      ? Color.fromRGBO(
+                                                                          153,
+                                                                          0,
+                                                                          0,
+                                                                          0.7)
+                                                                      : Color.fromRGBO(
+                                                                          206,
+                                                                          48,
+                                                                          255,
+                                                                          0.7))),
                           Text('NO2', style: TextStyle(color: Colors.white)),
-                        ],))
-                        ,
-                        Expanded(child: Column(children: [
+                        ],
+                      )),
+                      Expanded(
+                          child: Column(
+                        children: [
                           Text(o3.toStringAsFixed(2),
-                           style: TextStyle(color: o3 <= 33.99999999
-                                  ? Color.fromRGBO(156,255,156, 0.7)
-                                  : (o3 >= 34.0 && o3 <= 66.99999999)
-                                      ? Color.fromRGBO(48,255,1, 0.7)
-                                      : (o3 >= 67.0 && o3 <= 100.999999999)
-                                          ? Color.fromRGBO(49,207,1, 0.7)
-                                          : (o3 >= 101.0 && o3 <= 120.999999999)
-                                          ? Color.fromRGBO(255,255,1, 0.7)
-                                          : (o3 >= 121.0 && o3 <= 140.999999999)
-                                          ? Color.fromRGBO(255,207,1, 0.7)
-                                          : (o3 >= 141.0 && o3 <= 160.999999999)
-                                          ? Color.fromRGBO(255,154,0, 0.7)
-                                          : (o3 >= 161.0 && o3 <= 187.999999999)
-                                          ? Color.fromRGBO(255,100,100, 0.7)
-                                          : (o3 >= 188.0 && o3 <= 213.999999999)
-                                          ? Color.fromRGBO(255,0,0, 0.7)
-                                          : (o3 >= 214.0 && o3 <= 240.999999999)
-                                          ? Color.fromRGBO(153,0,0, 0.7)
-                                          : Color.fromRGBO(206,48,255, 0.7))),
+                              style: TextStyle(
+                                  color: o3 <= 33.99999999
+                                      ? Color.fromRGBO(156, 255, 156, 0.7)
+                                      : (o3 >= 34.0 && o3 <= 66.99999999)
+                                          ? Color.fromRGBO(48, 255, 1, 0.7)
+                                          : (o3 >= 67.0 && o3 <= 100.999999999)
+                                              ? Color.fromRGBO(49, 207, 1, 0.7)
+                                              : (o3 >= 101.0 &&
+                                                      o3 <= 120.999999999)
+                                                  ? Color.fromRGBO(
+                                                      255, 255, 1, 0.7)
+                                                  : (o3 >= 121.0 &&
+                                                          o3 <= 140.999999999)
+                                                      ? Color.fromRGBO(
+                                                          255, 207, 1, 0.7)
+                                                      : (o3 >= 141.0 &&
+                                                              o3 <=
+                                                                  160.999999999)
+                                                          ? Color.fromRGBO(
+                                                              255, 154, 0, 0.7)
+                                                          : (o3 >= 161.0 &&
+                                                                  o3 <=
+                                                                      187.999999999)
+                                                              ? Color.fromRGBO(
+                                                                  255,
+                                                                  100,
+                                                                  100,
+                                                                  0.7)
+                                                              : (o3 >= 188.0 &&
+                                                                      o3 <=
+                                                                          213.999999999)
+                                                                  ? Color
+                                                                      .fromRGBO(
+                                                                          255,
+                                                                          0,
+                                                                          0,
+                                                                          0.7)
+                                                                  : (o3 >= 214.0 &&
+                                                                          o3 <=
+                                                                              240.999999999)
+                                                                      ? Color.fromRGBO(
+                                                                          153,
+                                                                          0,
+                                                                          0,
+                                                                          0.7)
+                                                                      : Color.fromRGBO(
+                                                                          206,
+                                                                          48,
+                                                                          255,
+                                                                          0.7))),
                           Text('O3', style: TextStyle(color: Colors.white)),
-                        ],))
-                        ,
-                        Expanded(child: Column(children: [
+                        ],
+                      )),
+                      Expanded(
+                          child: Column(
+                        children: [
                           Text(co.toStringAsFixed(2),
-                           style: TextStyle(color: co <= 440.99999999
-                                  ? Color.fromRGBO(49,207,1, 0.7)
-                                  : (co >= 450.0 && co <= 940.99999999)
-                                      ? Color.fromRGBO(255,255,1, 0.7)
-                                      : (co >= 950.0 && co <= 1240.999999999)
-                                          ? Color.fromRGBO(255,154,0, 0.7)
-                                          : (co >= 1250.0 && co <= 1540.999999999)
-                                          ? Color.fromRGBO(255,0,0, 0.7)
-                                          : (co >= 1550.0 && co <= 3040.999999999)
-                                          ? Color.fromRGBO(153,0,0, 0.7)
-                                          : Color.fromRGBO(206,48,255, 0.7))),
+                              style: TextStyle(
+                                  color: co <= 440.99999999
+                                      ? Color.fromRGBO(49, 207, 1, 0.7)
+                                      : (co >= 450.0 && co <= 940.99999999)
+                                          ? Color.fromRGBO(255, 255, 1, 0.7)
+                                          : (co >= 950.0 &&
+                                                  co <= 1240.999999999)
+                                              ? Color.fromRGBO(255, 154, 0, 0.7)
+                                              : (co >= 1250.0 &&
+                                                      co <= 1540.999999999)
+                                                  ? Color.fromRGBO(
+                                                      255, 0, 0, 0.7)
+                                                  : (co >= 1550.0 &&
+                                                          co <= 3040.999999999)
+                                                      ? Color.fromRGBO(
+                                                          153, 0, 0, 0.7)
+                                                      : Color.fromRGBO(
+                                                          206, 48, 255, 0.7))),
                           Text('CO', style: TextStyle(color: Colors.white)),
-                        ],))
-                        ,
-                      ]
-                    ),
-                     Divider(
-                      height: 10,
-                      thickness: 1,
-                      color: Colors.grey),
-                    Padding(padding: const EdgeInsets.only(top: 16.0),
-                    child: Text(
-                      'Consejos',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700),
-                    )),
-                    Padding(padding: const EdgeInsets.only(top: 16.0),
-                    child: Text(
-                      icaTip,
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14
-                    )),
-                    )],
+                        ],
+                      )),
+                    ]),
+                    Divider(height: 10, thickness: 1, color: Colors.grey),
+                    Padding(
+                        padding: const EdgeInsets.only(top: 16.0),
+                        child: Text(
+                          'Consejos',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700),
+                        )),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16.0),
+                      child: Text(icaTip,
+                          style: TextStyle(color: Colors.white, fontSize: 14)),
+                    )
+                  ],
                 ),
               ),
             ),
           );
         });
-  }
-
-// Método que se llama por el usuario al realizar la búsqueda
-  void onTextFieldSubmitted(String input) {
-    fetchSearch(input);
   }
 
   @override
@@ -423,11 +594,10 @@ class _WeagusState extends State<Weagus> {
       home: Container(
           decoration: BoxDecoration(
             image: DecorationImage(
-              image: AssetImage('images/$weather.png'),
-              fit: BoxFit.cover,
-              colorFilter: new ColorFilter.mode(
-                  Colors.black.withOpacity(0.6), BlendMode.dstATop)
-            ),
+                image: AssetImage('images/$weather.png'),
+                fit: BoxFit.cover,
+                colorFilter: new ColorFilter.mode(
+                    Colors.black.withOpacity(0.8), BlendMode.dstATop)),
           ),
           child: city == ""
               ? Center(child: CircularProgressIndicator())
@@ -442,7 +612,34 @@ class _WeagusState extends State<Weagus> {
                           },
                           child: Icon(Icons.location_on, size: 36.0),
                         ),
-                      )
+                      ),
+                      MaterialButton(
+                                    child: Text(
+                                      'buscar',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                    shape: StadiumBorder(),
+                                    elevation: 5,
+                                    splashColor: Colors.transparent,
+                                    color: Colors.blue,
+                                    onPressed: () async {
+                                      final cityToSearch = await showSearch(
+                                          context: context,
+                                          delegate: CitySearchDelegate(
+                                              'Buscar ciudad...', history));
+                                              // 'Buscar ciudad...'));
+
+                                      if (cityToSearch != null) {
+                                        fetchSearch(cityToSearch.name);
+                                      setState(() {
+                                        this.selectedCity = cityToSearch;
+                                        if(!history.contains(cityToSearch)){
+                                          this.history.insert(0, cityToSearch);
+                                        }
+                                      });
+                                      }
+
+                                    }),
                     ],
                     backgroundColor: Colors.transparent,
                     elevation: 0.0,
@@ -455,40 +652,45 @@ class _WeagusState extends State<Weagus> {
                     children: <Widget>[
                       Column(
                         children: <Widget>[
-                          Container(
-                            width: 300,
-                            child: TextField(
-                              onSubmitted: (String input) {
-                                onTextFieldSubmitted(input);
-                              },
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 25),
-                              decoration: InputDecoration(
-                                hintText: 'Busca otra localización...',
-                                hintStyle: TextStyle(
-                                    color: Colors.white, fontSize: 18.0),
-                                prefixIcon:
-                                    Icon(Icons.search, color: Colors.white),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding:
-                                const EdgeInsets.only(right: 32.0, left: 32.0),
-                            child: Text(errorMessage,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                    color: Colors.redAccent,
-                                    fontSize:
-                                        Platform.isAndroid ? 15.0 : 20.0)),
-                          )
+                          // Container(
+                          //   child: Column(
+                          //     children: [
+                          //       MaterialButton(
+                          //           child: Text(
+                          //             'buscar',
+                          //             style: TextStyle(color: Colors.white),
+                          //           ),
+                          //           shape: StadiumBorder(),
+                          //           elevation: 5,
+                          //           splashColor: Colors.transparent,
+                          //           color: Colors.blue,
+                          //           onPressed: () async {
+                          //             final cityToSearch = await showSearch(
+                          //                 context: context,
+                          //                 delegate: CitySearchDelegate(
+                          //                     'Buscar ciudad...', history));
+                          //                     // 'Buscar ciudad...'));
+
+                          //             if (cityToSearch != null) {
+                          //               fetchSearch(cityToSearch.name);
+                          //             }
+
+                          //             setState(() {
+                          //               this.selectedCity = cityToSearch;
+                          //               if(!history.contains(cityToSearch)){
+                          //                 this.history.insert(0, cityToSearch);
+                          //               }
+                          //             });
+                          //           }),
+                          //     ],
+                          //   ),
+                          // ),
                         ],
                       ),
                       Column(
                         children: <Widget>[
                           Center(
-                            child: 
-                            Text(
+                            child: Text(
                               temperature.toString() + ' °C',
                               style: TextStyle(
                                   color: Colors.white, fontSize: 60.0),
@@ -507,17 +709,20 @@ class _WeagusState extends State<Weagus> {
                                   label: Text(epaIndex.toString() + ' ICA'),
                                   onPressed: onShowICA,
                                   style: TextButton.styleFrom(
-                                    primary: Colors.white,
-                                    backgroundColor: epaIndex <= 3
-                                        ? Color.fromRGBO(144, 190, 109, 0.7)
-                                        : (epaIndex >= 4 && epaIndex <= 6)
-                                            ? Color.fromRGBO(248, 150, 30, 0.7)
-                                            : (epaIndex >= 7 && epaIndex <= 9)
-                                                ? Color.fromRGBO(
-                                                    249, 65, 68, 0.7)
-                                                : Color.fromRGBO(
-                                                    106, 4, 15, 0.7),
-                                  ))
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10)),
+                                      primary: Colors.white,
+                                      backgroundColor: epaIndex <= 3
+                                          ? Color.fromRGBO(144, 190, 109, 0.7)
+                                          : (epaIndex >= 4 && epaIndex <= 6)
+                                              ? Color.fromRGBO(
+                                                  248, 150, 30, 0.7)
+                                              : (epaIndex >= 7 && epaIndex <= 9)
+                                                  ? Color.fromRGBO(
+                                                      249, 65, 68, 0.7)
+                                                  : Color.fromRGBO(
+                                                      106, 4, 15, 0.7)))
                             ],
                           )),
                           FittedBox(
