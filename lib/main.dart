@@ -613,21 +613,14 @@ class _WeagusState extends State<Weagus> {
                           child: Icon(Icons.location_on, size: 36.0),
                         ),
                       ),
-                      MaterialButton(
-                                    child: Text(
-                                      'buscar',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                    shape: StadiumBorder(),
-                                    elevation: 5,
-                                    splashColor: Colors.transparent,
-                                    color: Colors.blue,
-                                    onPressed: () async {
-                                      final cityToSearch = await showSearch(
+                      Padding(
+                        padding: const EdgeInsets.only(right: 20.0),
+                        child: GestureDetector(
+                          onTap: () async {
+                             final cityToSearch = await showSearch(
                                           context: context,
                                           delegate: CitySearchDelegate(
                                               'Buscar ciudad...', history));
-                                              // 'Buscar ciudad...'));
 
                                       if (cityToSearch != null) {
                                         fetchSearch(cityToSearch.name);
@@ -638,8 +631,9 @@ class _WeagusState extends State<Weagus> {
                                         }
                                       });
                                       }
-
-                                    }),
+                          },
+                          child: Icon(Icons.search, size: 36.0),
+                        ),),
                     ],
                     backgroundColor: Colors.transparent,
                     elevation: 0.0,
@@ -650,43 +644,6 @@ class _WeagusState extends State<Weagus> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: <Widget>[
-                      Column(
-                        children: <Widget>[
-                          // Container(
-                          //   child: Column(
-                          //     children: [
-                          //       MaterialButton(
-                          //           child: Text(
-                          //             'buscar',
-                          //             style: TextStyle(color: Colors.white),
-                          //           ),
-                          //           shape: StadiumBorder(),
-                          //           elevation: 5,
-                          //           splashColor: Colors.transparent,
-                          //           color: Colors.blue,
-                          //           onPressed: () async {
-                          //             final cityToSearch = await showSearch(
-                          //                 context: context,
-                          //                 delegate: CitySearchDelegate(
-                          //                     'Buscar ciudad...', history));
-                          //                     // 'Buscar ciudad...'));
-
-                          //             if (cityToSearch != null) {
-                          //               fetchSearch(cityToSearch.name);
-                          //             }
-
-                          //             setState(() {
-                          //               this.selectedCity = cityToSearch;
-                          //               if(!history.contains(cityToSearch)){
-                          //                 this.history.insert(0, cityToSearch);
-                          //               }
-                          //             });
-                          //           }),
-                          //     ],
-                          //   ),
-                          // ),
-                        ],
-                      ),
                       Column(
                         children: <Widget>[
                           Center(
