@@ -4,7 +4,6 @@ import 'dart:convert';
 
 import 'package:fab_circular_menu/fab_circular_menu.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:line_icons/line_icons.dart';
 import 'package:location/location.dart';
@@ -16,7 +15,6 @@ import 'Modals/Modal_ICA.dart';
 import 'Modals/Modal_pollen.dart';
 
 Future main() async {
-  await dotenv.load(fileName: ".env");
   runApp(MaterialApp(home: Weagus()));
 }
 
@@ -40,8 +38,8 @@ class _WeagusState extends State<Weagus> {
   String weather = 'weagus';
   String icon = '//cdn.weatherapi.com/weather/64x64/night/116.png';
   String errorMessage = '';
-  String API_KEY = dotenv.env['WEATHER_API_KEY'];
-  String POLLEN_API_KEY = dotenv.env['POLLEN_API_KEY'];
+  // String API_KEY = dotenv.env['WEATHER_API_KEY'];
+  // String POLLEN_API_KEY = dotenv.env['POLLEN_API_KEY'];
   String searchApiUrl = "http://api.weatherapi.com/v1/forecast.json?key=";
   String searchPollenApiUrl =
       "https://api.ambeedata.com/latest/pollen/by-lat-lng?";
@@ -125,7 +123,7 @@ class _WeagusState extends State<Weagus> {
             '&lng=' +
             longitude.toString()),
         headers: {
-          "x-api-key": POLLEN_API_KEY,
+          "x-api-key": "d98c7fd23b359622d11820b4ef5890334dab645a67a01dacb163c0c539138d89",
           "Content-type": "application/json"
         },
       );
@@ -181,7 +179,7 @@ class _WeagusState extends State<Weagus> {
     try {
       input.replaceAll(" ", "");
       var searchResult = await http.get(Uri.parse(searchApiUrl +
-          API_KEY +
+          "fb300dacca6d454a9be190729211909" +
           "&q=" +
           input +
           '&days=7&aqi=yes&alerts=yes'));
@@ -238,7 +236,7 @@ class _WeagusState extends State<Weagus> {
     await getLocation();
 
     var locationResult = await http.get(Uri.parse(searchApiUrl +
-        API_KEY +
+        "fb300dacca6d454a9be190729211909" +
         "&q=" +
         latitude.toString() +
         ',' +
