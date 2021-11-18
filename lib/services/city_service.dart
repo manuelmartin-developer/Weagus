@@ -7,7 +7,7 @@ class CityService {
   Future getCityByName(String name) async {
     try {
       var request = await http.get(Uri.parse(
-          'http://api.weatherapi.com/v1/search.json?key=fb300dacca6d454a9be190729211909&q=$name'));
+          'https://api.weatherapi.com/v1/search.json?key=fb300dacca6d454a9be190729211909&q=$name'));
 
       var result = await jsonDecode(request.body);
 

@@ -40,7 +40,7 @@ class _WeagusState extends State<Weagus> {
   String errorMessage = '';
   // String API_KEY = dotenv.env['WEATHER_API_KEY'];
   // String POLLEN_API_KEY = dotenv.env['POLLEN_API_KEY'];
-  String searchApiUrl = "http://api.weatherapi.com/v1/forecast.json?key=";
+  String searchApiUrl = "https://api.weatherapi.com/v1/forecast.json?key=";
   String searchPollenApiUrl =
       "https://api.ambeedata.com/latest/pollen/by-lat-lng?";
   List<double> minTemperatureForecast = List.filled(7, 0);

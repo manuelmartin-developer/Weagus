@@ -56,7 +56,7 @@ Widget forecastElement(daysFromNow, icon, minTemperature, maxTemperature,
               Padding(
                 padding: const EdgeInsets.only(top: 16.0, bottom: 16.0),
                 child: Image.network(
-                  'http:' + icon,
+                  'https:' + icon,
                   width: 50,
                 ),
               ),
