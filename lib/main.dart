@@ -3,14 +3,17 @@
 import 'dart:convert';
 
 import 'package:fab_circular_menu/fab_circular_menu.dart';
+import 'package:flip_card/flip_card.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:line_icons/line_icons.dart';
 import 'package:location/location.dart';
+import 'package:responsive_builder/responsive_builder.dart';
+import 'package:weagus/Forecast/Forecast.dart';
+import 'package:weagus/Hourly/Hourly.dart';
 import 'package:weagus/models/city.dart';
 import 'package:weagus/search/city_search.dart';
 
-import 'Forecast/Forecast.dart';
 import 'Modals/Modal_ICA.dart';
 import 'Modals/Modal_pollen.dart';
 
@@ -24,11 +27,11 @@ class Weagus extends StatefulWidget {
 }
 
 class _WeagusState extends State<Weagus> {
-
   // Variable global de gestión de estado del menú
   final GlobalKey<FabCircularMenuState> fabKey = GlobalKey();
 
   // Declaración de variables
+  String localTime = '';
   double temperature = 0;
   String city = '';
   String region = '';
@@ -38,8 +41,6 @@ class _WeagusState extends State<Weagus> {
   String weather = 'weagus';
   String icon = '//cdn.weatherapi.com/weather/64x64/night/116.png';
   String errorMessage = '';
-  // String API_KEY = dotenv.env['WEATHER_API_KEY'];
-  // String POLLEN_API_KEY = dotenv.env['POLLEN_API_KEY'];
   String searchApiUrl = "https://api.weatherapi.com/v1/forecast.json?key=";
   String searchPollenApiUrl =
       "https://api.ambeedata.com/latest/pollen/by-lat-lng?";
@@ -52,6 +53,12 @@ class _WeagusState extends State<Weagus> {
   List<double> uvForecast = List.filled(7, 0);
   List<String> iconForecast =
       List.filled(7, '//cdn.weatherapi.com/weather/64x64/night/116.png');
+
+  List<String> hourlyTime = List.filled(24, '');
+  List<double> hourlyTemperature = List.filled(24, 0);
+  List<int> hourlyIsDay = List.filled(24, 0);
+  List<String> hourlyIcon = List.filled(24, '');
+
   int epaIndex = 0;
   double co = 0;
   double no2 = 0;
@@ -72,7 +79,6 @@ class _WeagusState extends State<Weagus> {
   double totalprecip = 0;
   double humidity = 0;
   double uv = 0;
-
 
   // Método que que modifica el estado inicial de la aplicación
   initState() {
@@ -123,7 +129,8 @@ class _WeagusState extends State<Weagus> {
             '&lng=' +
             longitude.toString()),
         headers: {
-          "x-api-key": "d98c7fd23b359622d11820b4ef5890334dab645a67a01dacb163c0c539138d89",
+          "x-api-key":
+              "d98c7fd23b359622d11820b4ef5890334dab645a67a01dacb163c0c539138d89",
           "Content-type": "application/json"
         },
       );
@@ -186,6 +193,7 @@ class _WeagusState extends State<Weagus> {
       var result = await json.decode(searchResult.body);
 
       setState(() {
+        localTime = result["location"]["localtime"];
         city = result["location"]["name"];
         region = result["location"]["region"];
         country = result["location"]["country"];
@@ -209,6 +217,7 @@ class _WeagusState extends State<Weagus> {
       fetchPollenIndex();
 
       var forecast = result["forecast"]["forecastday"];
+      var hourly = forecast[0]["hour"];
 
       for (var i = 0; i < 7; i++) {
         setState(() {
@@ -220,6 +229,14 @@ class _WeagusState extends State<Weagus> {
           humidityForecast[i] = forecast[i]["day"]["totalprecip_mm"];
           uvForecast[i] = forecast[i]["day"]["uv"];
           iconForecast[i] = forecast[i]["day"]["condition"]["icon"];
+        });
+      }
+      for (var i = 0; i < 24; i++) {
+        setState(() {
+          hourlyTime[i] = hourly[i]["time"];
+          hourlyTemperature[i] = hourly[i]["temp_c"];
+          hourlyIcon[i] = hourly[i]["condition"]["icon"];
+          hourlyIsDay[i] = hourly[i]["is_day"];
         });
       }
     } catch (e) {
@@ -246,6 +263,7 @@ class _WeagusState extends State<Weagus> {
     var result = await json.decode(locationResult.body);
 
     setState(() {
+      localTime = result["location"]["localtime"];
       city = result["location"]["name"];
       region = result["location"]["region"];
       country = result["location"]["country"];
@@ -267,6 +285,7 @@ class _WeagusState extends State<Weagus> {
     fetchPollenIndex();
 
     var forecast = result["forecast"]["forecastday"];
+    var hourly = forecast[0]["hour"];
 
     for (var i = 0; i < 7; i++) {
       setState(() {
@@ -278,6 +297,14 @@ class _WeagusState extends State<Weagus> {
         humidityForecast[i] = forecast[i]["day"]["totalprecip_mm"];
         uvForecast[i] = forecast[i]["day"]["uv"];
         iconForecast[i] = forecast[i]["day"]["condition"]["icon"];
+      });
+    }
+    for (var i = 0; i < 24; i++) {
+      setState(() {
+        hourlyTime[i] = hourly[i]["time"];
+        hourlyTemperature[i] = hourly[i]["temp_c"];
+        hourlyIcon[i] = hourly[i]["condition"]["icon"];
+        hourlyIsDay[i] = hourly[i]["is_day"];
       });
     }
   }
@@ -357,136 +384,323 @@ class _WeagusState extends State<Weagus> {
               : Scaffold(
                   resizeToAvoidBottomInset: false,
                   backgroundColor: Colors.transparent,
-                  body: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Column(
-                        children: <Widget>[
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                temperature.toStringAsFixed(0),
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 150,
-                                    fontWeight: FontWeight.w300),
-                              ),
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text('°C',
-                                      style: TextStyle(
-                                          fontSize: 50,
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w300)),
-                                  Text(''),
-                                  Text(''),
-                                  Text(''),
-                                  Text(''),
-                                  Text(''),
-                                ],
-                              )
-                            ],
-                          ),
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              city,
-                              style: TextStyle(
-                                  color: Colors.white, fontSize: 25.0),
-                            ),
-                          ),
-                          Center(
-                            child: Text(
-                              region + "(" + country + ")",
-                              style: TextStyle(
-                                  color: Colors.white, fontSize: 16.0),
-                            ),
-                          ),
-                          Center(
-                              child: Padding(
-                            padding:
-                                const EdgeInsets.only(top: 40.0, bottom: 40),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                TextButton.icon(
-                                    icon: Icon(LineIcons.industry),
-                                    label: Text(epaIndex.toString() + ' ICA'),
-                                    onPressed: onShowICA,
-                                    style: TextButton.styleFrom(
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(10)),
-                                        primary: Colors.white,
-                                        backgroundColor: epaIndex <= 3
-                                            ? Color.fromRGBO(144, 190, 109, 0.7)
-                                            : (epaIndex >= 4 && epaIndex <= 6)
-                                                ? Color.fromRGBO(
-                                                    248, 150, 30, 0.7)
-                                                : (epaIndex >= 7 &&
-                                                        epaIndex <= 9)
-                                                    ? Color.fromRGBO(
-                                                        249, 65, 68, 0.7)
-                                                    : Color.fromRGBO(
-                                                        106, 4, 15, 0.7))),
-                                TextButton.icon(
-                                    icon: Icon(LineIcons.spa),
-                                    label: Text('Polen'),
-                                    onPressed: onShowPolen,
-                                    style: TextButton.styleFrom(
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(10)),
-                                        primary: Colors.white,
-                                        backgroundColor: grass_pollen_risk ==
-                                                    'Moderado' ||
-                                                tree_pollen_risk ==
-                                                    'Moderado' ||
-                                                weed_pollen_risk == 'Moderado'
-                                            ? Color.fromRGBO(248, 150, 30, 0.7)
-                                            : (grass_pollen_risk == 'Alto' ||
-                                                    tree_pollen_risk ==
-                                                        'Alto' ||
-                                                    weed_pollen_risk == 'Alto')
-                                                ? Color.fromRGBO(
-                                                    106, 4, 15, 0.7)
-                                                : (grass_pollen_risk ==
-                                                            'Muy Alto' ||
-                                                        tree_pollen_risk ==
-                                                            'Muy Alto' ||
-                                                        weed_pollen_risk ==
-                                                            'Muy Alto')
-                                                    ? Color.fromRGBO(
-                                                        206, 48, 255, 0.7)
-                                                    : Color.fromRGBO(
-                                                        144, 190, 109, 0.7)))
-                              ],
-                            ),
-                          )),
-                        ],
-                      ),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
+                  body: OrientationLayoutBuilder(
+                    portrait: (context) => Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: <Widget>[
+                        Column(
                           children: <Widget>[
-                            for (var i = 0; i < 7; i++)
-                              forecastElement(
-                                  i + 1,
-                                  iconForecast[i],
-                                  minTemperatureForecast[i],
-                                  maxTemperatureForecast[i],
-                                  avgtempForecast[i],
-                                  maxwindForecast[i],
-                                  totalPrecipForecast[i],
-                                  humidityForecast[i],
-                                  uvForecast[i]),
+                            FlipCard(
+                              direction: FlipDirection.HORIZONTAL,
+                              speed: 500,
+                              onFlipDone: (status) {},
+                              front: Container(
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          temperature.toStringAsFixed(0),
+                                          style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 150,
+                                              fontWeight: FontWeight.w300),
+                                        ),
+                                        Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Text('°C',
+                                                style: TextStyle(
+                                                    fontSize: 50,
+                                                    color: Colors.white,
+                                                    fontWeight:
+                                                        FontWeight.w300)),
+                                            Text(''),
+                                            Text(''),
+                                            Text(''),
+                                            Text(''),
+                                            Text(''),
+                                          ],
+                                        )
+                                      ],
+                                    ),
+                                    FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        city,
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 25.0),
+                                      ),
+                                    ),
+                                    Center(
+                                      child: Text(
+                                        region + "(" + country + ")",
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16.0),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              back: Container(
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    children: <Widget>[
+                                      for (var i = 0; i < 24; i++)
+                                        hourlyElement(
+                                            hourlyTime[i],
+                                            hourlyTemperature[i],
+                                            hourlyIsDay[i],
+                                            hourlyIcon[i],
+                                            localTime)
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Center(
+                                child: Padding(
+                              padding:
+                                  const EdgeInsets.only(top: 40.0, bottom: 40),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  TextButton.icon(
+                                      icon: Icon(LineIcons.industry),
+                                      label: Text(epaIndex.toString() + ' ICA'),
+                                      onPressed: onShowICA,
+                                      style: TextButton.styleFrom(
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10)),
+                                          primary: Colors.white,
+                                          backgroundColor: epaIndex <= 3
+                                              ? Color.fromRGBO(
+                                                  144, 190, 109, 0.7)
+                                              : (epaIndex >= 4 && epaIndex <= 6)
+                                                  ? Color.fromRGBO(
+                                                      248, 150, 30, 0.7)
+                                                  : (epaIndex >= 7 &&
+                                                          epaIndex <= 9)
+                                                      ? Color.fromRGBO(
+                                                          249, 65, 68, 0.7)
+                                                      : Color.fromRGBO(
+                                                          106, 4, 15, 0.7))),
+                                  TextButton.icon(
+                                      icon: Icon(LineIcons.spa),
+                                      label: Text('Polen'),
+                                      onPressed: onShowPolen,
+                                      style: TextButton.styleFrom(
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10)),
+                                          primary: Colors.white,
+                                          backgroundColor: grass_pollen_risk ==
+                                                      'Moderado' ||
+                                                  tree_pollen_risk ==
+                                                      'Moderado' ||
+                                                  weed_pollen_risk == 'Moderado'
+                                              ? Color.fromRGBO(
+                                                  248, 150, 30, 0.7)
+                                              : (grass_pollen_risk == 'Alto' ||
+                                                      tree_pollen_risk ==
+                                                          'Alto' ||
+                                                      weed_pollen_risk ==
+                                                          'Alto')
+                                                  ? Color.fromRGBO(
+                                                      106, 4, 15, 0.7)
+                                                  : (grass_pollen_risk ==
+                                                              'Muy Alto' ||
+                                                          tree_pollen_risk ==
+                                                              'Muy Alto' ||
+                                                          weed_pollen_risk ==
+                                                              'Muy Alto')
+                                                      ? Color.fromRGBO(
+                                                          206, 48, 255, 0.7)
+                                                      : Color.fromRGBO(
+                                                          144, 190, 109, 0.7)))
+                                ],
+                              ),
+                            )),
                           ],
                         ),
-                      ),
-                    ],
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: <Widget>[
+                              for (var i = 0; i < 7; i++)
+                                forecastElement(
+                                    i,
+                                    iconForecast[i],
+                                    minTemperatureForecast[i],
+                                    maxTemperatureForecast[i],
+                                    avgtempForecast[i],
+                                    maxwindForecast[i],
+                                    totalPrecipForecast[i],
+                                    humidityForecast[i],
+                                    uvForecast[i]),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    landscape: (context) => Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: <Widget>[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            Padding(
+                              padding: const EdgeInsets.only(top: 20, left: 20),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    temperature.toStringAsFixed(0),
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 80,
+                                        fontWeight: FontWeight.w300),
+                                  ),
+                                  Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text('°C',
+                                          style: TextStyle(
+                                              fontSize: 30,
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w300)),
+                                      Text(''),
+                                      Text(''),
+                                      Text(''),
+                                      Text(''),
+                                      Text(''),
+                                    ],
+                                  )
+                                ],
+                              ),
+                            ),
+                            Column(
+                              children: [
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    city,
+                                    style: TextStyle(
+                                        color: Colors.white, fontSize: 25.0),
+                                  ),
+                                ),
+                                Center(
+                                  child: Text(
+                                    region + "(" + country + ")",
+                                    style: TextStyle(
+                                        color: Colors.white, fontSize: 16.0),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Center(
+                                child: Padding(
+                              padding: const EdgeInsets.only(
+                                  top: 40.0, bottom: 40, left: 20),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                        left: 20, right: 20),
+                                    child: TextButton.icon(
+                                        icon: Icon(LineIcons.industry),
+                                        label:
+                                            Text(epaIndex.toString() + ' ICA'),
+                                        onPressed: onShowICA,
+                                        style: TextButton.styleFrom(
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10)),
+                                            primary: Colors.white,
+                                            backgroundColor: epaIndex <= 3
+                                                ? Color.fromRGBO(
+                                                    144, 190, 109, 0.7)
+                                                : (epaIndex >= 4 &&
+                                                        epaIndex <= 6)
+                                                    ? Color.fromRGBO(
+                                                        248, 150, 30, 0.7)
+                                                    : (epaIndex >= 7 &&
+                                                            epaIndex <= 9)
+                                                        ? Color.fromRGBO(
+                                                            249, 65, 68, 0.7)
+                                                        : Color.fromRGBO(
+                                                            106, 4, 15, 0.7))),
+                                  ),
+                                  TextButton.icon(
+                                      icon: Icon(LineIcons.spa),
+                                      label: Text('Polen'),
+                                      onPressed: onShowPolen,
+                                      style: TextButton.styleFrom(
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10)),
+                                          primary: Colors.white,
+                                          backgroundColor: grass_pollen_risk ==
+                                                      'Moderado' ||
+                                                  tree_pollen_risk ==
+                                                      'Moderado' ||
+                                                  weed_pollen_risk == 'Moderado'
+                                              ? Color.fromRGBO(
+                                                  248, 150, 30, 0.7)
+                                              : (grass_pollen_risk == 'Alto' ||
+                                                      tree_pollen_risk ==
+                                                          'Alto' ||
+                                                      weed_pollen_risk ==
+                                                          'Alto')
+                                                  ? Color.fromRGBO(
+                                                      106, 4, 15, 0.7)
+                                                  : (grass_pollen_risk ==
+                                                              'Muy Alto' ||
+                                                          tree_pollen_risk ==
+                                                              'Muy Alto' ||
+                                                          weed_pollen_risk ==
+                                                              'Muy Alto')
+                                                      ? Color.fromRGBO(
+                                                          206, 48, 255, 0.7)
+                                                      : Color.fromRGBO(
+                                                          144, 190, 109, 0.7)))
+                                ],
+                              ),
+                            )),
+                          ],
+                        ),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: <Widget>[
+                              for (var i = 0; i < 7; i++)
+                                forecastElement(
+                                    i + 1,
+                                    iconForecast[i],
+                                    minTemperatureForecast[i],
+                                    maxTemperatureForecast[i],
+                                    avgtempForecast[i],
+                                    maxwindForecast[i],
+                                    totalPrecipForecast[i],
+                                    humidityForecast[i],
+                                    uvForecast[i]),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   floatingActionButton: Padding(
                     padding: const EdgeInsets.only(top: 30.0),
