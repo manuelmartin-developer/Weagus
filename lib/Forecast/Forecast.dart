@@ -18,7 +18,7 @@ Widget forecastElement(daysFromNow, icon, minTemperature, maxTemperature,
       onFlipDone: (status) {},
       front: Container(
         decoration: BoxDecoration(
-          color: Color.fromRGBO(205, 212, 228, 0.3),
+          color: Color.fromRGBO(205, 212, 228, 0.4),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Padding(
